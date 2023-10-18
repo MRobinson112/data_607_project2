@@ -1,0 +1,93 @@
+---
+title: "Data clean"
+author: "Michael Robinson"
+date: "2023-10-11"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Dataset 1
+# Invoices With Merged Categories and Merged Amounts
+Because a single transaction (identified with an order id ) has multiple items purchased, who ever captured this data decided to create a single row for each order, thereby lumping the different items purchased and the amounts together into 2 fields respectively.
+
+The better thing to do is to let each item purchased be on a single row with the amount. It is better to repeat the Order IDs on different rows than lumping up amounts in a single cell. We would be analyzing items bought and amounts a lot, we need them separated into rows.
+
+```{r cars}
+library(dplyr)
+library(tidyr)
+
+
+invoice_data <- "https://raw.githubusercontent.com/MRobinson112/data_607_project2/main/Dirty_invoice.csv"
+
+data <- read.csv(invoice_data, header = TRUE, stringsAsFactors = FALSE)
+
+print(data)
+
+# Split the Category and Amount columns by "|"
+data_split <- data %>%
+  separate_rows(Category, Amount, sep = "\\|")
+
+# View the cleaned data in the desired format
+print(data_split)
+
+``` 
+#Dataset 2
+# Medicine Data With Combined Quantity and Measure
+Going by clean data rules, you should have every field/column represent unique things. So split the combined Quantity and Measure on this data into separate columns/fields. When you are done, your Quantity column should sum up to 17,600.00. You will find this total on the clean worksheet once you download.
+
+```{r}
+# Load the tidyr package
+library(tidyr)
+library(readr)
+
+#
+Med_data <- "https://raw.githubusercontent.com/MRobinson112/data_607_project2/main/med_data.csv"
+
+datam <- read.csv(Med_data, header = TRUE, stringsAsFactors = FALSE)
+
+datam
+
+df <- separate(datam, Quantity, into = c("Quantity", "Measure"), sep = "(?<=\\d)(?=[A-Za-z])", convert = TRUE)
+
+# convert = TRUE will try to automatically convert quantity to numeric
+
+# Print the resulting data frame
+print(df)
+
+``` 
+# Dataset #3 - a work order process at a manufacturing site
+Question: What is the distribution of work order status by Building and Type?
+This was taken from slack uploades by Sam
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(tidyxl)
+library(ggplot2)
+
+
+Order_data <- readxl::read_excel("~/Downloads/Example of a work order process at a manufacturing site.xlsx", skip = 1) 
+
+head(Order_data)
+Order_data <- Order_data %>% filter(!is.na(Building) | !is.na(Type))
+
+Order_data <- Order_data %>% fill(Building, Type)
+
+tidy_data <- Order_data %>%
+  pivot_longer(cols = -c(Building, Type), names_to = "Work_Order_Status", values_to = "Value")
+
+head(tidy_data) 
+
+# a bar plot to show the distribution of work order status by Building and Type
+ggplot(tidy_data, aes(x = Building, fill = Work_Order_Status)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ Type) +
+  labs(title = "Distribution of Work Order Status by Building and Type",
+       y = "Proportion",
+       x = "Building") +
+  theme_minimal()
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
